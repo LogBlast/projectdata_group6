@@ -11,18 +11,17 @@ from display.menu_handler import MenuHandler
 from display.display_utils import DisplayUtils
 from utils.get_user_inputs import GetUserInputs
 from utils.colors import Colors
+from utils.constants import *
+from data.data_cleaning_handler import DataCleaningHandler
 
-raw_file = pd.read_csv("../data/raw/online_gaming_behavior_dataset.csv")
-
-print(raw_file.head(5))
-print(raw_file.isnull().sum())
+raw_df = pd.read_csv(RAW_FILE_PATH)
 
 def main():
     """Fonction principale du launcher"""
     
     # Dictionnaire des actions disponibles
     menu_actions: Dict[str, Callable] = {
-        '1': lambda: MenuHandler.handle_placeholder_option("About Data Cleaning"),
+        '1': lambda: DataCleaningHandler.display_reflexion(raw=raw_df),
         '2': lambda: MenuHandler.handle_placeholder_option("About Preprocessing"),
         'C': MenuHandler.display_credits,
     }
@@ -40,7 +39,9 @@ def main():
             sys.exit(0)
         
         elif choice in menu_actions:
+            DisplayUtils.clear_screen()
             menu_actions[choice]()
+            break
         
         else:
             print(f"\n{Colors.RED}❌ Invalid choice: '{choice}'{Colors.RESET}")

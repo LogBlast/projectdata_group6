@@ -1,6 +1,8 @@
 from utils.colors import Colors
 from display.display_utils import DisplayUtils
 
+import sys
+
 class MenuHandler :
     def display_welcome():
         """Affiche le message de bienvenue en ASCII art orange"""
@@ -67,10 +69,11 @@ class MenuHandler :
         print(f"{Colors.YELLOW}This dataset is made available under the CC BY 4.0 license.{Colors.RESET}")
         print(f"{Colors.YELLOW}This is an original synthetic dataset created for educational purposes.{Colors.RESET}")
         
-        input(f"\nPress Enter to return to main menu...")
+        input(f"\nPress Enter to quit...")
 
 
     def handle_placeholder_option(option_name: str):
         print(f"\n🚧 {option_name} - Coming Soon!")
         print("This feature will be implemented as the project progresses.")
-        input("\nPress Enter to continue...")
+        input("\nPress Enter to quit...")
+        sys.exit(0)
