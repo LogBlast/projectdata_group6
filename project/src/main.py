@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from scipy import stats
 import statsmodels.api as sm
 from statsmodels.stats.proportion import proportions_ztest
@@ -13,8 +14,12 @@ from utils.get_user_inputs import GetUserInputs
 from utils.colors import Colors
 from utils.constants import *
 from data.data_cleaning_handler import DataCleaningHandler
+from data.data_preprocessing_handler import DataPreprocessingHandler
+from visualization.labels_visualization import LabelVisualiation
 
-raw_df = pd.read_csv(RAW_FILE_PATH)
+from ai_generated import AI_Gen
+
+raw_df = pd.read_csv("../data/raw/online_gaming_behavior_dataset.csv")
 
 def main():
     """Fonction principale du launcher"""
@@ -48,13 +53,21 @@ def main():
             print("Please select a valid option from the menu.")
             input("\nPress Enter to continue...")
 
+def currently(df: pd.DataFrame):
+    # LabelVisualiation.display_labels_proportion_to_target(df=raw_df)
+    df = DataPreprocessingHandler.preprocess_dataset(df=df)
+    print(df.head(5))
 
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\n\n{Colors.ORANGE}Program interrupted by user.{Colors.RESET}")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n{Colors.RED}An error occurred: {e}{Colors.RESET}")
-        sys.exit(1)
+currently(raw_df)
+
+# AI_Gen.en_cours(raw_df)
+
+# if __name__ == "__main__":
+#     try:
+#         main()
+#     except KeyboardInterrupt:
+#         print(f"\n\n{Colors.ORANGE}Program interrupted by user.{Colors.RESET}")
+#         sys.exit(0)
+#     except Exception as e:
+#         print(f"\n{Colors.RED}An error occurred: {e}{Colors.RESET}")
+#         sys.exit(1)g
