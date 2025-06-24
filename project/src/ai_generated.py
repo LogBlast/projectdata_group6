@@ -1,10 +1,205 @@
+from scipy import stats
+
+
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
-from scipy import stats
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (classification_report, confusion_matrix, 
+                           accuracy_score, roc_auc_score)
 import warnings
 warnings.filterwarnings('ignore')
+
+class RandomForestAnalyzer:
+    def __init__(self, df, target_column, test_size=0.2, random_state=42):
+        """
+        Initialize the Random Forest Analyzer
+        
+        Parameters:
+        df (pd.DataFrame): Your cleaned and preprocessed dataset
+        target_column (str): Name of the target column
+        test_size (float): Proportion of data for testing (default: 0.2)
+        random_state (int): Random state for reproducibility (default: 42)
+        """
+        self.df = df.copy()
+        self.target_column = target_column
+        self.test_size = test_size
+        self.random_state = random_state
+        
+        # Initialize attributes
+        self.X = None
+        self.y = None
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+        self.model = None
+        self.y_pred = None
+        self.feature_importances = None
+        
+    def prepare_data(self):
+        """Separate features and target, then split the data"""
+        print("Preparing data...")
+        
+        # Separate features and target
+        self.X = self.df.drop(columns=[self.target_column])
+        self.y = self.df[self.target_column]
+        
+        print(f"Features shape: {self.X.shape}")
+        print(f"Target shape: {self.y.shape}")
+        print(f"Target distribution:\n{self.y.value_counts()}")
+        
+        # Split the data
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+            self.X, self.y, 
+            test_size=self.test_size, 
+            random_state=self.random_state,
+            stratify=self.y
+        )
+        
+        print(f"\nTraining set: {self.X_train.shape}")
+        print(f"Testing set: {self.X_test.shape}")
+        
+    def train_model(self, n_estimators=100, **kwargs):
+        """
+        Train the Random Forest model
+        
+        Parameters:
+        n_estimators (int): Number of trees in the forest
+        **kwargs: Additional parameters for RandomForestClassifier
+        """
+        print("\nTraining Random Forest model...")
+        
+        # Default parameters
+        default_params = {
+            'n_estimators': n_estimators,
+            'random_state': self.random_state,
+            'class_weight': 'balanced',
+            'n_jobs': -1
+        }
+        
+        # Update with any custom parameters
+        default_params.update(kwargs)
+        
+        # Create and train the model
+        self.model = RandomForestClassifier(**default_params)
+        self.model.fit(self.X_train, self.y_train)
+        
+        print("Model training completed!")
+        
+        # Make predictions
+        self.y_pred = self.model.predict(self.X_test)
+        
+        # Cross-validation
+        print("\nPerforming 5-fold cross-validation...")
+        cv_scores = cross_val_score(self.model, self.X_train, self.y_train, 
+                                   cv=5, scoring='accuracy')
+        print(f"CV Accuracy: {cv_scores.mean():.3f} (+/- {cv_scores.std() * 2:.3f})")
+        
+    def evaluate_model(self):
+        """Evaluate the model performance"""
+        print("\n" + "="*50)
+        print("MODEL EVALUATION")
+        print("="*50)
+        
+        # Basic metrics
+        accuracy = accuracy_score(self.y_test, self.y_pred)
+        print(f"Test Accuracy: {accuracy:.3f}")
+        
+        # Classification report
+        print("\nClassification Report:")
+        print(classification_report(self.y_test, self.y_pred))
+        
+        # ROC-AUC for binary classification
+        if len(np.unique(self.y)) == 2:
+            try:
+                auc = roc_auc_score(self.y_test, self.y_pred)
+                print(f"ROC-AUC Score: {auc:.3f}")
+            except:
+                pass
+    
+    def plot_confusion_matrix(self, figsize=(8, 6)):
+        """Plot confusion matrix"""
+        plt.figure(figsize=figsize)
+        cm = confusion_matrix(self.y_test, self.y_pred)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                   xticklabels=np.unique(self.y), 
+                   yticklabels=np.unique(self.y))
+        plt.title('Random Forest Confusion Matrix')
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.tight_layout()
+        plt.show()
+    
+    def analyze_feature_importance(self, top_n=15, figsize=(12, 8)):
+        """Analyze and plot feature importances"""
+        print(f"\nAnalyzing feature importance (top {top_n})...")
+        
+        # Get feature importances
+        importances = self.model.feature_importances_
+        feature_names = self.X.columns
+        
+        # Create DataFrame
+        self.feature_importances = pd.DataFrame({
+            'Feature': feature_names,
+            'Importance': importances
+        }).sort_values(by='Importance', ascending=False)
+        
+        print(f"Top {top_n} most important features:")
+        print(self.feature_importances.head(top_n))
+        
+        # Plot feature importances
+        plt.figure(figsize=figsize)
+        top_features = self.feature_importances.head(top_n)
+        sns.barplot(data=top_features, x='Importance', y='Feature', palette='viridis')
+        plt.title(f'Top {top_n} Feature Importances - Random Forest')
+        plt.xlabel('Importance Score')
+        plt.ylabel('Features')
+        plt.tight_layout()
+        plt.show()
+        
+        return self.feature_importances
+    
+    def run_complete_analysis(self, n_estimators=100, top_features=15, **kwargs):
+        """
+        Run the complete analysis pipeline
+        
+        Parameters:
+        n_estimators (int): Number of trees
+        top_features (int): Number of top features to display
+        **kwargs: Additional model parameters
+        """
+        print("="*60)
+        print("RANDOM FOREST COMPLETE ANALYSIS")
+        print("="*60)
+        
+        # Step 1: Prepare data
+        self.prepare_data()
+        
+        # Step 2: Train model
+        self.train_model(n_estimators=n_estimators, **kwargs)
+        
+        # Step 3: Evaluate model
+        self.evaluate_model()
+        
+        # Step 4: Plot confusion matrix
+        self.plot_confusion_matrix()
+        
+        # Step 5: Analyze feature importance
+        feature_importance_df = self.analyze_feature_importance(top_n=top_features)
+        
+        print("\n" + "="*60)
+        print("ANALYSIS COMPLETED!")
+        print("="*60)
+        
+        return {
+            'model': self.model,
+            'predictions': self.y_pred,
+            'feature_importances': feature_importance_df,
+            'test_accuracy': accuracy_score(self.y_test, self.y_pred)
+        }
 
 class AI_Gen :
     def en_cours(data: pd.DataFrame):

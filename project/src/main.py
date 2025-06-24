@@ -17,7 +17,7 @@ from data.data_cleaning_handler import DataCleaningHandler
 from data.data_preprocessing_handler import DataPreprocessingHandler
 from visualization.labels_visualization import LabelVisualiation
 
-from ai_generated import AI_Gen
+from ai_generated import AI_Gen, RandomForestAnalyzer
 
 raw_df = pd.read_csv("../data/raw/online_gaming_behavior_dataset.csv")
 
@@ -57,6 +57,8 @@ def currently(df: pd.DataFrame):
     # LabelVisualiation.display_labels_proportion_to_target(df=raw_df)
     df = DataPreprocessingHandler.preprocess_dataset(df=df)
     print(df.head(5))
+    analyzer = RandomForestAnalyzer(df, target_column='EngagementLevel_High')
+    results = analyzer.run_complete_analysis(n_estimators=200, top_features=10)
 
 currently(raw_df)
 

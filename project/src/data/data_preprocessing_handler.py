@@ -7,9 +7,11 @@ class DataPreprocessingHandler:
         return df
     
     def preprocess_categorical_data(df : pd.DataFrame) -> pd.DataFrame:
+        numerical_columns = df.select_dtypes(include=['number']).columns.to_list()
         categorical_columns = df.select_dtypes(include=['object']).columns.to_list()
+
         df_dummies = pd.get_dummies(data=df[categorical_columns], dtype=int)
-        df = pd.concat([df, df_dummies], axis=1) # to keep or not the original values that were hot encoded
+        df = pd.concat([df[numerical_columns], df_dummies], axis=1) # to keep (or not) the original values that were hot encoded
         return df
     
     def preprocess_dataset(df : pd.DataFrame) -> pd.DataFrame:
