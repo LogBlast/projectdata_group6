@@ -1,7 +1,0 @@
-In order to run the project, you will need the following libraries :
--> Numpy
--> Pandas
--> Matplotlib
--> Scikit-Learn
-
-# Running on Python 3.11 and more recents versions
